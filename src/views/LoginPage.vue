@@ -1,6 +1,7 @@
 <template>
 	<div class="login-container">
-	  <div class="login-card">
+	  <UserDashboard v-if="isLoggedIn" :username="username" />
+	  <div v-else class="login-card">
 		<h1>登录</h1>
 		<form @submit.prevent="handleLogin">
 		  <div class="form-group">
@@ -11,7 +12,7 @@
 			</select>
 		  </div>
 		  <div class="form-group">
-			<input v-model="username" type="text" placeholder="用户名" required />
+			<input v-model="usernameInput" type="text" placeholder="用户名" required />
 		  </div>
 		  <div class="form-group">
 			<input v-model="password" type="password" placeholder="密码" required />
@@ -26,41 +27,49 @@
   
   <script>
   import axios from 'axios';
+  import UserDashboard from './User/UserDashboard.vue';
   
   export default {
+	components: { UserDashboard },
 	data() {
 	  return {
 		role: 'user',  // 默认选择用户身份
-		username: '',
-		password: ''
+		usernameInput: '',  // Input field for username
+		password: '',
+		username: '',  // Store the logged-in username
+		isLoggedIn: false  // Track login status
 	  };
 	},
 	methods: {
 	  async handleLogin() {
 		console.log(`登录角色: ${this.role}`);
-		console.log(`用户名: ${this.username}`);
+		console.log(`用户名: ${this.usernameInput}`);
 		console.log(`密码: ${this.password}`);
-	
+  
 		try {
 		  // 发起登录请求
 		  const response = await axios.post('http://localhost:8082/fixedasset_war_exploded/login', {
 			role: this.role,
-			username: this.username,
+			username: this.usernameInput,
 			password: this.password
 		  }, {
 			headers: {
 			  'Content-Type': 'application/json'  // 确保后端正确处理 JSON 请求
 			}
 		  });
-	
+  
 		  const data = response.data;  // 直接从 response 中获取数据
-	
+  
 		  if (data.success) {
+			// Store the username and update login status
+			this.username = data.username;
+			this.isLoggedIn = true;
+  
 			// 根据角色跳转到不同的页面
 			if (this.role === 'admin') {
-			  this.$router.push('/admin-dashboard');
+			  this.$router.push('/admin/dashboard');
 			} else {
-			  this.$router.push('/user-dashboard');
+			  this.$router.push('/user/dashboard');
 			}
 		  } else {
 			alert(data.message || '登录失败');
@@ -75,8 +84,6 @@
 	}
   };
   </script>
-  
-  
   
   <style scoped>
   .login-container {

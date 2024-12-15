@@ -2,15 +2,76 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '../views/Home.vue'
 import LoginPage from '../views/LoginPage.vue'
 import RegisterPage from '../views/RegisterPage.vue'
-import userPage from '../views/user-dashboard.vue'
-import adminPage from '../views/admin-dashboard.vue'
+import UserDashboard from '../views/User/UserDashboard.vue'
+import AdminDashboard from '../views/Admin/AdminDashboard.vue'
+import UserViewDevice from '../views/User/UserViewDevice.vue'
+import UserApplyDevice from '../views/User/UserApplyDevice.vue'
+import UserBorrowDevice from '../views/User/UserBorrowDevice.vue'
+import UserReturnDevice from '../views/User/UserReturnDevice.vue'
+import AdminManageUser from '../views/Admin/AdminManageUser.vue'
+import AdminPutInStorageDevice from '../views/Admin/AdminDeviceManagement/AdminPutInStorageDevice.vue'
+import AdminTakeOutStorageDevice from '../views/Admin/AdminDeviceManagement/AdminTakeOutStorageDevice.vue'
+import AdminQueryDevice from '../views/Admin/AdminDeviceManagement/AdminQueryDevice.vue'
+import AdminScrapDevice from '../views/Admin/AdminDeviceManagement/AdminScrapDevice.vue'
+import AdminDeviceStatistics from '../views/Admin/AdminDeviceManagement/AdminDeviceStatistics.vue'
+import AdminUnreturnedDevice from '../views/Admin/AdminDeviceManagement/AdminUnreturnedDevice.vue'
 
 const routes = [
   { path: '/', component: Home },
   { path: '/login', component: LoginPage },
   { path: '/register', component: RegisterPage },
-  { path: '/userpage', component:userPage},
-  { path: '/adminpage', component:adminPage}
+  {
+    path: '/user/dashboard',
+    component: UserDashboard
+  },
+  {
+    path: '/admin/dashboard',
+    component: AdminDashboard
+  },
+  {
+    path: '/user/view-device',
+    component: UserViewDevice
+  },
+  {
+    path: '/user/apply-device',
+    component: UserApplyDevice
+  },
+  {
+    path: '/user/borrow-device',
+    component: UserBorrowDevice
+  },
+  {
+    path: '/user/return-device',
+    component: UserReturnDevice
+  },
+  {
+    path: '/admin/manage-user',
+    component: AdminManageUser
+  },
+  {
+    path: '/admin/put-in-storage',
+    component: AdminPutInStorageDevice
+  },
+  {
+    path: '/admin/take-out-storage',
+    component: AdminTakeOutStorageDevice
+  },
+  {
+    path: '/admin/query-device',
+    component: AdminQueryDevice
+  },
+  {
+    path: '/admin/scrap-device',
+    component: AdminScrapDevice
+  },
+  {
+    path: '/admin/statistics-device',
+    component: AdminDeviceStatistics
+  },
+  {
+    path: '/admin/unreturned-device',
+    component: AdminUnreturnedDevice
+  }
 ]
 
 const router = createRouter({
