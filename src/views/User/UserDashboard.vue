@@ -1,7 +1,11 @@
 <template>
 	<div class="page-container">
+	  <div class="header">
+		<button @click="goToHome" class="back-btn">返回登录页</button> <!-- 返回按钮 -->
+	  </div>
+
 	  <div class="title-container">
-		<h1 class="main-title">欢迎来到用户控制面板</h1>
+		<h1 class="main-title">欢迎来到用户控制面板, {{ username }}</h1>
 		<p class="subtitle">探索您的设备，轻松管理</p>
 	  </div>
   
@@ -14,18 +18,36 @@
 	</div>
   </template>
   
-  
-  
   <script>
   export default {
+	data() {
+	  return {
+		username: ''  // 用来存储用户名
+	  };
+	},
+	mounted() {
+	  // 从 localStorage 获取用户信息
+	  const storedUser = localStorage.getItem('user');
+	  if (storedUser) {
+		const user = JSON.parse(storedUser);
+		this.username = user.username;  // 设置用户名
+	  }
+	},
 	methods: {
+		// 返回登录页面
+		goToHome() {
+		this.$router.push('/login');
+	  },
 	  navigateToPage(page) {
 		// 跳转到选定的页面
 		this.$router.push(page);
 	  }
 	}
-  }
+  };
   </script>
+  
+
+
   <style scoped>
   /* 页面整体样式 */
   .page-container {
@@ -37,6 +59,26 @@
 	background: linear-gradient(135deg, #1c1c1c, #343434);
 	color: #fff;
 	font-family: 'Roboto', sans-serif;
+  }
+  .header {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+  }
+  .back-btn {
+	background-color: #f44336;  /* 酷炫红色 */
+	color: white;
+	padding: 12px 30px;
+	border: none;
+	font-size: 18px;
+	cursor: pointer;
+	border-radius: 30px;
+	transition: all 0.3s ease;
+  }
+  
+  .back-btn:hover {
+	background-color: #e53935;
+	transform: scale(1.1); /* 放大效果 */
   }
   
   /* 主标题 */

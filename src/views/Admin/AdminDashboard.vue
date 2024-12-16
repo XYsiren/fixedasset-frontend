@@ -1,5 +1,8 @@
 <template>
 	<div class="admin-page-container">
+	  <div class="header">
+		<button @click="goToHome" class="back-btn">返回登录页</button> <!-- 返回按钮 -->
+	  </div>
 	  <div class="title-container">
 		<h1 class="main-title">管理员控制面板</h1>
 		<p class="subtitle">管理用户与设备，轻松高效</p>
@@ -39,6 +42,27 @@
 	background: linear-gradient(135deg, #2f4f4f, #1c1c1c); /* 更加沉稳的背景色 */
 	color: #fff;
 	font-family: 'Roboto', sans-serif;
+  }
+
+  .header {
+	position: absolute;
+	top: 20px;
+	right: 20px;
+  }
+  .back-btn {
+	background-color: #f44336;  /* 酷炫红色 */
+	color: white;
+	padding: 12px 30px;
+	border: none;
+	font-size: 18px;
+	cursor: pointer;
+	border-radius: 30px;
+	transition: all 0.3s ease;
+  }
+  
+  .back-btn:hover {
+	background-color: #e53935;
+	transform: scale(1.1); /* 放大效果 */
   }
   
   /* 主标题 */

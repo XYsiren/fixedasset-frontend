@@ -1,7 +1,6 @@
 <template>
 	<div class="login-container">
-	  <UserDashboard v-if="isLoggedIn" :username="username" />
-	  <div v-else class="login-card">
+	  <div class="login-card">
 		<h1>登录</h1>
 		<form @submit.prevent="handleLogin">
 		  <div class="form-group">
@@ -27,17 +26,15 @@
   
   <script>
   import axios from 'axios';
-  import UserDashboard from './User/UserDashboard.vue';
   
   export default {
-	components: { UserDashboard },
 	data() {
 	  return {
 		role: 'user',  // 默认选择用户身份
-		usernameInput: '',  // Input field for username
-		password: '',
-		username: '',  // Store the logged-in username
-		isLoggedIn: false  // Track login status
+		usernameInput: '',  // 输入的用户名
+		password: '',  // 输入的密码
+		username: '',  // 存储登录用户名
+		isLoggedIn: false  // 跟踪登录状态
 	  };
 	},
 	methods: {
@@ -58,12 +55,18 @@
 			}
 		  });
   
-		  const data = response.data;  // 直接从 response 中获取数据
+		  const data = response.data;
   
 		  if (data.success) {
-			// Store the username and update login status
+			// 更新当前组件的状态
 			this.username = data.username;
 			this.isLoggedIn = true;
+  
+			// 将用户信息存储到 localStorage
+			localStorage.setItem('user', JSON.stringify({
+			  username: data.username,
+			  role: this.role
+			}));
   
 			// 根据角色跳转到不同的页面
 			if (this.role === 'admin') {
@@ -75,7 +78,6 @@
 			alert(data.message || '登录失败');
 		  }
 		} catch (error) {
-		  // 判断是否是网络错误
 		  const errorMessage = error.response ? error.response.data.message : error.message;
 		  alert(errorMessage || '登录失败，请稍后再试');
 		  console.error('错误详情:', error.response || error.message || error);

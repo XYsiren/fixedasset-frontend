@@ -1,5 +1,7 @@
 <template>
 	<div class="page-container">
+	<button @click="goToHome" class="back-btn">返回主菜单</button>  <!-- 添加返回按钮 -->
+
 	  <h2 class="page-title">设备列表</h2>
 	  <div class="device-list">
 		<div v-for="device in deviceList" :key="device.deviceID" class="device-card">
@@ -40,7 +42,11 @@
 	  },
 	  getStatusClass(status) {
 		return status === '在库' ? 'status-online' : (status === '已报废' ? 'status-offline' : 'status-pending');
-	  }
+	  },
+    goToHome() {
+      // 使用 Vue Router 跳转到主菜单页面
+      this.$router.push('/user/dashboard');
+    }
 	}
   }
   </script>
@@ -58,7 +64,20 @@
   font-family: 'Roboto', sans-serif;
   color: #fff;
 }
+.back-btn {
+  background-color: #4CAF50;  /* 绿色背景 */
+  color: white;  /* 白色文字 */
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  border-radius: 5px;
+}
 
+.back-btn:hover {
+  background-color: #45a049;  /* 按钮悬停时的背景色 */
+}
 /* 页面标题 */
 .page-title {
   font-size: 36px;
@@ -134,7 +153,7 @@
   .device-list {
     grid-template-columns: 1fr;
   }
-
+ 
   .device-info p {
     font-size: 16px;
   }
