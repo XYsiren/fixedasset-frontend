@@ -87,7 +87,7 @@
 	right: 20px;
   }
   .back-btn {
-	background-color: #367ff4;  /* 酷炫红色 */
+	background-color: #369ef4;  
 	color: white;
 	padding: 12px 30px;
 	border: none;

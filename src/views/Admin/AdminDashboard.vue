@@ -23,6 +23,10 @@
   <script>
   export default {
 	methods: {
+		 // 返回登录页
+		 goToHome() {
+		this.$router.push('/login');
+	  },
 	  navigateToPage(page) {
 		// 跳转到选定的页面
 		this.$router.push(page);
