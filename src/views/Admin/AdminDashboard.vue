@@ -10,6 +10,7 @@
   
 	  <div class="button-container">
 		<button @click="navigateToPage('/admin/manage-user')" class="admin-button">管理用户</button>
+		<button @click="navigateToPage('/admin/examine-apply')" class="admin-button">审核用户请求</button>
 		<button @click="navigateToPage('/admin/put-in-storage')" class="admin-button">设备入库</button>
 		<button @click="navigateToPage('/admin/take-out-storage')" class="admin-button">设备出库</button>
 		<button @click="navigateToPage('/admin/query-device')" class="admin-button">设备查询</button>

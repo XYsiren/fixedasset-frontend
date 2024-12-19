@@ -9,6 +9,7 @@ import UserApplyDevice from '../views/User/UserApplyDevice.vue'
 import UserBorrowDevice from '../views/User/UserBorrowDevice.vue'
 import UserReturnDevice from '../views/User/UserReturnDevice.vue'
 import AdminManageUser from '../views/Admin/AdminManageUser.vue'
+import AdminExamineApply from '../views/Admin/AdminExamineApply.vue'
 import AdminPutInStorageDevice from '../views/Admin/AdminDeviceManagement/AdminPutInStorageDevice.vue'
 import AdminTakeOutStorageDevice from '../views/Admin/AdminDeviceManagement/AdminTakeOutStorageDevice.vue'
 import AdminQueryDevice from '../views/Admin/AdminDeviceManagement/AdminQueryDevice.vue'
@@ -71,6 +72,9 @@ const routes = [
   {
     path: '/admin/unreturned-device',
     component: AdminUnreturnedDevice
+  },
+  {path: '/admin/examine-apply',
+    component: AdminExamineApply
   }
 ]
 
