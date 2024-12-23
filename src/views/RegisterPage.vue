@@ -1,4 +1,5 @@
 <template>
+	<button @click="goToHome" class="back-btn">返回主菜单</button>
 	<div class="container">
 	  <div class="register-container">
 		<h1 class="title">注册</h1>
@@ -68,6 +69,10 @@
 	  };
 	},
 	methods: {
+		// 返回登录页面
+	  goToHome() {
+		this.$router.push('/');
+	  },
 	  handleUserRegister() {
 		if (this.password !== this.confirmPassword) {
 		  alert('密码和确认密码不匹配');
@@ -174,6 +179,22 @@
 	max-width: 500px;
 	text-align: center;
 	box-sizing: border-box;
+  }
+
+  .back-btn {
+	background-color: #365ff4;  /* 酷炫红色 */
+	color: white;
+	padding: 12px 30px;
+	border: none;
+	font-size: 18px;
+	cursor: pointer;
+	border-radius: 30px;
+	transition: all 0.3s ease;
+  }
+  
+  .back-btn:hover {
+	background-color: #e53935;
+	transform: scale(1.1); /* 放大效果 */
   }
   
   .title {

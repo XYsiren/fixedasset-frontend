@@ -1,111 +1,116 @@
 <template>  
-	<div class="page">
-		<div class="device-entry-container">  
-	  <div class="header">  
-		<button @click="goToHome" class="back-btn">返回主菜单</button> <!-- 返回按钮 -->  
+	<div class="page">  
+	  <div class="device-entry-container">  
+		<div class="header">  
+		  <button @click="goToHome" class="back-btn">返回主菜单</button>  
+		</div>  
+		<h2 class="page-title">设备入库</h2>  
+		<div class="input-group">  
+		  <label>设备名称:</label>  
+		  <input type="text" v-model="deviceName" placeholder="请输入设备名称" required />  
+		</div>  
+		<div class="input-group">  
+		  <label>设备类型:</label>  
+		  <select v-model="deviceType" required>  
+			<option disabled value="">请选择设备类型</option>  
+			<option value="办公家具">办公家具</option>  
+			<option value="电子设备">电子设备</option>  
+		  </select>  
+		</div>  
+		<div class="input-group">  
+		  <label>设备数量:</label>  
+		  <input type="number" v-model="deviceQuantity" placeholder="请输入设备数量" required min="1" />  
+		</div>  
+		<div class="input-group">  
+		  <label>购买日期:</label>  
+		  <input type="date" v-model="purchaseDate" required />  
+		</div>  
+		<div class="input-group">  
+		  <label>保修年限:</label>  
+		  <input type="number" v-model="warrantyYears" placeholder="请输入保修年限（年）" required />  
+		</div>  
+		<div class="input-group">  
+		  <label>所在位置:</label>  
+		  <input type="text" v-model="location" placeholder="请输入设备所在位置" required />  
+		</div>  
+		<div class="input-group">  
+		  <label>创建日期:</label>  
+		  <input type="date" v-model="createdAt" required />  
+		</div>  
+		<div class="input-group">  
+		  <label>更新日期:</label>  
+		  <input type="date" v-model="updatedAt" required />  
+		</div>  
+		<button @click="putInStorage" class="submit-button">入库</button>  
+		<p v-if="message" class="message">{{ message }}</p>  
 	  </div>  
-	  <h2 class="page-title">设备入库</h2>  
-	  <div class="input-group">  
-		<label>设备名称:</label>  
-		<input type="text" v-model="deviceName" placeholder="请输入设备名称" required />  
-	  </div>  
-	  <div class="input-group">  
-		<label>设备类型:</label>  
-		<select v-model="deviceType" required>  
-		  <option disabled value="">请选择设备类型</option>  
-		  <option value="办公家具">办公家具</option>  
-		  <option value="电子设备">电子设备</option>  
-		</select>  
-	  </div>  
-	  <div class="input-group">  
-		<label>购买日期:</label>  
-		<input type="date" v-model="purchaseDate" required />  
-	  </div>  
-	  <div class="input-group">  
-		<label>保修年限:</label>  
-		<input type="number" v-model="warrantyYears" placeholder="请输入保修年限（年）" required />  
-	  </div>  
-	  <div class="input-group">  
-		<label>所在位置:</label>  
-		<input type="text" v-model="location" placeholder="请输入设备所在位置" required />  
-	  </div>  
-	  <div class="input-group">  
-		<label>创建日期:</label>  
-		<input type="date" v-model="createdAt" required />  
-	  </div>  
-	  <div class="input-group">  
-		<label>更新日期:</label>  
-		<input type="date" v-model="updatedAt" required />  
-	  </div>  
-	  <button @click="putInStorage" class="submit-button">入库</button>  
-	  <p v-if="message" class="message">{{ message }}</p>  
 	</div>  
-	</div>
-  </template>  
+  </template>
 	
-  <script>  
-  export default {  
-	data() {  
-	  return {  
-		deviceName: '',  
-		deviceType: '',  
-		purchaseDate: '',  
-		warrantyYears: '',   
-		location: '',  
-		createdAt: '',  
-		updatedAt: '',  
-		message: '',  
-		username: '' // 确保有用户名的变量  
-	  }  
-	},  
-	mounted() {  
-	  // 从 localStorage 获取用户名  
-	  const storedUser = localStorage.getItem('user');  
-	  if (storedUser) {  
-		const user = JSON.parse(storedUser);  
-		this.username = user.username || ''; // 设置用户名  
-	  }  
-	},  
-	methods: {  
-	  // 返回主菜单  
-	  goToHome() {  
-		this.$router.push('/admin/dashboard');  
-	  },  
-	  putInStorage() {  
-		const data = {  
-		  deviceName: this.deviceName,  
-		  deviceType: this.deviceType,  
-		  purchaseDate: this.purchaseDate,  
-		  warrantyYears: this.warrantyYears, // 发送保修年限  
-		  location: this.location,  
-		  createdAt: this.createdAt,  
-		  updatedAt: this.updatedAt,  
-		  adminname: this.username  
+	<script>  
+	export default {  
+	  data() {  
+		return {  
+		  deviceName: '',  
+		  deviceType: '',  
+		  deviceQuantity: 1, // 新增设备数量属性，默认值为1  
+		  purchaseDate: '',  
+		  warrantyYears: '',   
+		  location: '',  
+		  createdAt: '',  
+		  updatedAt: '',  
+		  message: '',  
+		  username: '' // 确保有用户名的变量  
 		}  
-	
-		// 发送POST请求到后端设备入库接口  
-		this.$axios.post('http://localhost:8082/fixedasset_war_exploded/putin-storage', data)  
-		  .then(response => {  
-			this.message = response.data.message;  
-			this.resetForm(); // 重置表单  
-		  })  
-		  .catch(error => {  
-			console.error('设备入库出错:', error);  
-			this.message = '设备入库失败，请检查输入信息';  
-		  })  
 	  },  
-	  resetForm() {  
-		this.deviceName = '';  
-		this.deviceType = '';  
-		this.purchaseDate = '';  
-		this.warrantyYears = ''; // 重置保修年限  
-		this.location = '';  
-		this.createdAt = '';  
-		this.updatedAt = '';  
+	  mounted() {  
+		const storedUser = localStorage.getItem('user');  
+		if (storedUser) {  
+		  const user = JSON.parse(storedUser);  
+		  this.username = user.username || '';  
+		}  
+	  },  
+	  methods: {  
+		goToHome() {  
+		  this.$router.push('/admin/dashboard');  
+		},  
+		putInStorage() {  
+		  const data = {  
+			deviceName: this.deviceName,  
+			deviceType: this.deviceType,  
+			deviceQuantity: this.deviceQuantity, // 发送设备数量  
+			purchaseDate: this.purchaseDate,  
+			warrantyYears: this.warrantyYears,  
+			location: this.location,  
+			createdAt: this.createdAt,  
+			updatedAt: this.updatedAt,  
+			adminname: this.username  
+		  }  
+	
+		  // 发送POST请求到后端设备入库接口  
+		  this.$axios.post('http://localhost:8082/fixedasset_war_exploded/putin-storage', data)  
+			.then(response => {  
+			  this.message = response.data.message;  
+			  this.resetForm(); // 重置表单  
+			})  
+			.catch(error => {  
+			  console.error('设备入库出错:', error);  
+			  this.message = '设备入库失败，请检查输入信息';  
+			})  
+		},  
+		resetForm() {  
+		  this.deviceName = '';  
+		  this.deviceType = '';  
+		  this.deviceQuantity = 1; // 重置设备数量  
+		  this.purchaseDate = '';  
+		  this.warrantyYears = '';  
+		  this.location = '';  
+		  this.createdAt = '';  
+		  this.updatedAt = '';  
+		}  
 	  }  
 	}  
-  }  
-  </script>  
+	</script>
 	
   <style scoped>  
   .page{

@@ -16,40 +16,44 @@
 			  </span>  
 			</p>  
 		  </div>  
-		  <!-- 只在设备状态为“在库”时显示“领用设备”按钮 -->  
-		  <button v-if="device.status === '在库'" @click="openApplyModal(device)" class="apply-btn">领用设备</button>
-		  <button v-if="device.status === '待审核'" @click="openApplyModal(device)" class="apply-btn">领用设备</button>    
+		  <button v-if="device.status === '在库'" @click="openApplyModal(device)" class="apply-btn">领用设备</button>  
+		  <button v-if="device.status === '待审核'" class="apply-btn">设备审核中</button>    
 		</div>  
 	  </div>  
   
-	  <!-- 领用模态框 -->  
 	  <div v-if="isModalOpen" class="modal">  
-      <div class="modal-content">  
-        <span class="close" @click="closeModal">&times;</span>  
-        <h3>领用设备</h3>  
-        <div class="input-group">  
-          <label for="deviceId">设备ID:</label>  
-          <input type="text" v-model="deviceId" id="deviceId" placeholder="请输入设备ID" class="input" />  
-          <label for="deviceName">设备名称:</label>  
-          <input type="text" v-model="deviceName" id="deviceName" placeholder="请输入设备名称" class="input" />  
+        <div class="modal-content">  
+          <span class="close" @click="closeModal">&times;</span>  
+          <h3>领用设备</h3>  
+          <div class="input-group">  
+            <label for="deviceId">设备ID:</label>  
+            <input type="text" v-model="deviceId" id="deviceId" placeholder="请输入设备ID" class="input" />  
+            <label for="deviceName">设备名称:</label>  
+            <input type="text" v-model="deviceName" id="deviceName" placeholder="请输入设备名称" class="input" />  
+            <label for="applyPeriod">领用时间（天数）:</label>  
+            <input type="number" v-model="applyPeriod" id="applyPeriod" placeholder="请输入领用天数" class="input" min="1" @input="calculateReturnDate" />  
+            <label for="returnDate">应归还时间:</label>  
+            <input type="text" v-model="returnDueDate" id="returnDate" placeholder="应归还时间" class="input" readonly />  
+          </div>  
+          <p v-if="message" :class="['message', messageClass]">{{ message }}</p>  
+          <div class="modal-footer">  
+            <button @click="applyDevice" class="apply-btn">领用</button>  
+            <button @click="closeModal" class="cancel-btn">取消</button>  
+          </div>  
         </div>  
-        <p v-if="message" :class="['message', messageClass]">{{ message }}</p>  
-        <div class="modal-footer">  
-          <button @click="applyDevice" class="apply-btn">领用</button>  
-          <button @click="closeModal" class="cancel-btn">取消</button> <!-- 取消按钮 -->  
-        </div>  
-      </div>  
 	  </div>  
 	</div>  
-  </template>  
+</template>  
   
-  <script>  
-  export default {  
+<script>  
+export default {  
 	data() {  
 	  return {  
 		deviceList: [],  
 		deviceId: '',  
-		deviceName: '',  
+		deviceName: '',   
+		applyPeriod: '',  
+		returnDueDate: '', // 新增的应归还时间属性  
 		message: '',  
 		messageClass: '',  
 		isModalOpen: false,  
@@ -67,78 +71,99 @@
 	},  
 	methods: {  
 	  getDeviceList() {  
-		this.$axios.get('http://localhost:8082/fixedasset_war_exploded/view-device')  
-		  .then(response => {  
-			this.deviceList = response.data.deviceList;  
-		  })  
-		  .catch(error => {  
-			console.error('获取设备列表出错:', error);  
-		  });  
-	  },  
-	  getStatusClass(status) {  
-		return status === '在库' ? 'status-online' : (status === '已报废' ? 'status-offline' : 'status-pending');  
-	  },  
-	  goToHome() {  
-		this.$router.push('/user/dashboard');  
-	  },  
-	  openApplyModal(device) {  
-		this.isModalOpen = true;  
-		this.selectedDevice = device;  
-		this.deviceId = device.deviceID; // 填充设备ID  
-		this.deviceName = device.devicename; // 填充设备名称  
-	  },  
-	  closeModal() {  
-		this.isModalOpen = false;  
-		this.deviceId = '';  
-		this.deviceName = '';  
-		this.message = '';  
-	  },  
-	  applyDevice() {  
-    if (!this.deviceId && !this.deviceName) {  
-        this.message = '请输入设备ID或设备名称';  
-        this.messageClass = 'error';  
-        return;  
-    }  
-
-    const data = {  
-        username: this.username,  
-        deviceId: this.deviceId || null,  
-        deviceName: this.deviceName || null  
-    };  
-
-    this.$axios.post('http://localhost:8082/fixedasset_war_exploded/apply-device', data)  
+      this.$axios.get('http://localhost:8082/fixedasset_war_exploded/view-device')  
         .then(response => {  
-            if (response.data.success) {  
-                this.message = '待管理员审核中！';  
-                this.messageClass = 'success';  
-                this.deviceId = '';  
-                this.deviceName = '';  
-                this.closeModal();  
-
-                // 更新设备列表状态  
-                this.updateDeviceStatus(this.deviceId || this.deviceName); // 更新设备状态  
-            } else {  
-                this.message = response.data.message || '设备领用失败，请检查输入信息';  
-                this.messageClass = 'error';  
-            }  
+        this.deviceList = response.data.deviceList;  
         })  
         .catch(error => {  
-            console.error('设备领用出错:', error);  
-            this.message = '设备领用失败，请检查输入信息';  
-            this.messageClass = 'error';  
+        console.error('获取设备列表出错:', error);  
         });  
-		},  
+	  },  
+	  getStatusClass(status) {  
+		  return status === '在库' ? 'status-online' : (status === '已报废' ? 'status-offline' : 'status-pending');  
+	  },  
+	  goToHome() {  
+		  this.$router.push('/user/dashboard');  
+	  },  
+	  openApplyModal(device) {  
+      this.isModalOpen = true;  
+      this.selectedDevice = device;  
+      this.deviceId = device.deviceID;  
+      this.deviceName = device.devicename;  
+      this.applyPeriod = ''; // 清空之前的输入  
+      this.returnDueDate = ''; // 清空归还时间  
+	  },  
+	  closeModal() {  
+      this.isModalOpen = false;  
+      this.deviceId = '';  
+      this.deviceName = '';  
+      this.applyPeriod = '';  
+      this.returnDueDate = ''; // 清空归还时间  
+      this.message = '';  
+	  },  
+	  calculateReturnDate() {  
+      if (this.applyPeriod > 0) {  
+        const currentDate = new Date();  
+        const returnDate = new Date(currentDate);  
+        returnDate.setDate(currentDate.getDate() + parseInt(this.applyPeriod));  
+        this.returnDueDate = returnDate.toLocaleDateString(); // 格式化日期  
+      } else {  
+        this.returnDueDate = ''; // 如果输入无效，清空应归还时间  
+      }  
+	  },  
+    applyDevice() {  
+      if (!this.deviceId && !this.deviceName) {  
+          this.message = '请输入设备ID或设备名称';  
+          this.messageClass = 'error';  
+          return;  
+      }  
 
-		updateDeviceStatus(deviceIdentifier) {  
-			// 根据设备ID或设备名称查找设备并更新状态  
-			const device = this.deviceList.find(d => d.deviceID === deviceIdentifier || d.devicename === deviceIdentifier);  
-			if (device) {  
-				device.status = '待审核'; // 更新设备状态为“待审核”  
-			}  
-		}
-  }  
+      if (!this.applyPeriod || this.applyPeriod <= 0) {  
+          this.message = '请输入有效的领用时间';  
+          this.messageClass = 'error';  
+          return;  
+      }  
+
+      const data = {  
+          username: this.username,  
+          deviceId: this.deviceId || null,  
+          deviceName: this.deviceName || null,  
+          applyPeriod: this.applyPeriod,  
+          returnDueDate: this.returnDueDate  
+      };  
+
+      this.$axios.post('http://localhost:8082/fixedasset_war_exploded/apply-device', data)  
+          .then(response => {  
+              if (response.data.success) {  
+                  this.message = '待管理员审核中！';  
+                  this.messageClass = 'success';  
+
+                  // 更新设备列表中的设备状态为“待审核”  
+                  const device = this.deviceList.find(d => d.deviceID === this.deviceId || d.devicename === this.deviceName);  
+                  if (device) {  
+                      device.status = '待审核'; // 直接更新设备状态  
+                  }  
+
+                  // 清空输入  
+                  this.deviceId = '';  
+                  this.deviceName = '';  
+                  this.applyPeriod = '';  
+                  this.returnDueDate = '';  
+                  this.closeModal();  
+              } else {  
+                  this.message = response.data.message || '设备领用失败，请检查输入信息';  
+                  this.messageClass = 'error';  
+              }  
+          })  
+          .catch(error => {  
+              console.error('设备领用出错:', error);  
+              this.message = '设备领用失败，请检查输入信息';  
+              this.messageClass = 'error';  
+          });  
+      } 
+    }  
 };  
-</script>  
+</script>
 
 <style scoped>  
 .page-container {  

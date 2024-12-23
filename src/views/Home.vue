@@ -28,7 +28,7 @@
   <style scoped>
   /* 全局背景渐变 */
   .container {
-	background: linear-gradient(135deg, #1a237e, #0d47a1);
+	background: linear-gradient(135deg, #959ce5, #0d47a1);
 	height: 100vh;
 	display: flex;
 	flex-direction: column;

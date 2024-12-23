@@ -1,55 +1,84 @@
-<template>
-	<div class="page-container">
-	<button @click="goToHome" class="back-btn">返回主菜单</button>  <!-- 添加返回按钮 -->
+<template>  
+	<div class="page-container">  
+		<button @click="goToHome" class="back-btn">返回主菜单</button>   
 
-	  <h2 class="page-title">设备列表</h2>
-	  <div class="device-list">
-		<div v-for="device in deviceList" :key="device.deviceID" class="device-card">
-		  <div class="device-info">
-			<p><strong>设备ID:</strong> {{ device.deviceID }}</p>
-			<p><strong>设备名称:</strong> {{ device.devicename }}</p>
-			<p><strong>设备类型:</strong> {{ device.type }}</p>
-			<p><strong>设备状态:</strong>
-			  <span :class="['device-status', getStatusClass(device.status)]">
-				{{ device.status }}
-			  </span>
-			</p>
-		  </div>
-		</div>
-	  </div>
-	</div>
-  </template>
+		<h2 class="page-title">设备列表</h2>  
+		<div class="device-list">  
+			<div v-for="device in deviceList" :key="device.deviceID" class="device-card">  
+				<img :src="getImageUrl(device.imageUrl)" alt="设备图片" class="device-image" />  
+				<div class="device-info">  
+					<p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
+					<p><strong>设备名称:</strong> {{ device.devicename }}</p>  
+					<p><strong>设备类型:</strong> {{ device.type }}</p>  
+					<p><strong>设备状态:</strong>  
+						<span :class="['device-status', getStatusClass(device)]">  
+							{{ getDeviceStatus(device) }}  
+						</span>  
+					</p>  
+          <p><strong>在库数量:</strong> {{ device.number }}</p>
+				</div>  
+			</div>  
+		</div>  
+	</div>  
+</template>
+
   
-  <script>
-  export default {
-	data() {
-	  return {
-		deviceList: []
-	  }
-	},
-	mounted() {
-	  this.getDeviceList();
-	},
-	methods: {
-	  getDeviceList() {
-		this.$axios.get('http://localhost:8082/fixedasset_war_exploded/view-device')
-		  .then(response => {
-			this.deviceList = response.data.deviceList;
-		  })
-		  .catch(error => {
-			console.error('获取设备列表出错:', error);
-		  });
-	  },
-	  getStatusClass(status) {
-		return status === '在库' ? 'status-online' : (status === '已报废' ? 'status-offline' : 'status-pending');
-	  },
-    goToHome() {
-      // 使用 Vue Router 跳转到主菜单页面
-      this.$router.push('/user/dashboard');
-    }
-	}
-  }
-  </script>
+<script>  
+export default {  
+	data() {  
+	  return {  
+		deviceList: []  
+	  }  
+	},  
+	mounted() {  
+	  this.getDeviceList();  
+	},  
+	methods: {  
+	  getDeviceList() {  
+		this.$axios.get('http://localhost:8082/fixedasset_war_exploded/view-device')  
+		  .then(response => {  
+			this.deviceList = response.data.deviceList;  
+		  })  
+		  .catch(error => {  
+			console.error('获取设备列表出错:', error);  
+		  });  
+	  },  
+
+	  // 获取图片URL
+	  getImageUrl(imageName) {  
+      if (!imageName) {  
+        console.warn('未提供有效的图片名称');  
+        return require('@/assets/images/logo.png'); // 返回默认图片  
+      }  
+      return require(`@/assets/images/${imageName}`);  
+    },
+
+	  // 根据设备状态返回对应的状态类
+	  getStatusClass(device) {  
+		    if (device.number > 0) {  
+			    return 'status-available';  // 可借出  
+		    } else {  
+			    return 'status-out-of-stock';  // 暂无库存  
+		    }  
+	  },  
+
+	  // 根据设备的在库数量返回对应的状态文本
+	  getDeviceStatus(device) {  
+		    if (device.number > 0) {  
+			    return '可借出';  // 如果有库存
+		    } else {  
+			    return '暂无库存';  // 如果没有库存
+		    }  
+	  },  
+
+    // 返回首页
+    goToHome() {  
+        this.$router.push('/user/dashboard');  
+    }  
+	}  
+}
+</script>
+
   
   
   <style scoped>
@@ -99,12 +128,21 @@
 }
 
 /* 设备卡片 */
-.device-card {
-  background-color: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+.device-card {  
+  background-color: rgba(255, 255, 255, 0.1);  
+  border-radius: 10px;  
+  padding: 20px;  
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);  
+  transition: transform 0.3s ease, box-shadow 0.3s ease;  
+  text-align: center; /* 中心对齐内容 */  
+}  
+
+/* 添加设备图片的样式 */  
+.device-image {  
+	width: 100%;      
+	height: auto;     
+	border-radius: 10px;   
+	margin-bottom: 15px;   
 }
 
 .device-card:hover {
@@ -133,6 +171,18 @@
   background-color: #4caf50; /* 绿色 */
   color: #fff;
 }
+
+.status-available {
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: rgb(98, 206, 98);
+}
+
+.status-out-of-stock {
+  color: red;
+}
+
 
 .status-offline {
   background-color: #f44336; /* 红色 */

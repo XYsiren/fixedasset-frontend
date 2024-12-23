@@ -1,245 +1,241 @@
-<template>
-	<div class="page-container">
-	  <div class="header">
-		<button @click="goToHome" class="back-btn">返回主菜单</button> <!-- 返回按钮 -->
-	  </div>
+<template>  
+	<div class="page-container">  
+	  <div class="header">  
+		<button @click="goToHome" class="back-btn">返回主菜单</button> <!-- 返回按钮 -->  
+	  </div>  
   
-	  <h2 class="page-title">归还设备</h2>
-	  <div class="form-container">
-		<div class="input-group">
-		  <input type="text" v-model="deviceId" placeholder="请输入设备ID" class="input-field" />
-		  <input type="text" v-model="deviceName" placeholder="或者输入设备名称" class="input-field" />
-		</div>
+	  <h2 class="page-title">归还设备</h2>  
+
+	  <!-- 领用后未归还设备部分 -->   
+	  <div class="devices-section">  
+		<h3>领用后未归还设备</h3>  
+		<div v-if="appliedDevices.length === 0" class="no-devices">没有未归还的领用设备。</div>  
+		<div v-for="device in appliedDevices" :key="device.deviceID" class="device-card">  
+		  <p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
+		  <p><strong>设备名称:</strong> {{ device.devicename }}</p>  
+      <p><strong>应归还时间:</strong> {{ device.returnDueDate }}</p>  
+		  <button @click="confirmReturn(device)" class="return-btn">归还此设备</button>  
+		</div>  
+	  </div>  
+
+	  <!-- 借用后未归还设备部分 -->  
+	  <div class="devices-section">  
+		<h3>借用后未归还设备</h3>  
+		<div v-if="borrowedDevices.length === 0" class="no-devices">没有未归还的借用设备。</div>  
+		<div v-for="device in borrowedDevices" :key="device.deviceID" class="device-card">  
+		  <p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
+		  <p><strong>设备名称:</strong> {{ device.devicename }}</p>  
+      <p><strong>借用天数:</strong> {{ device.borrowPeriod }} 天</p>  
+      <p><strong>应归还时间:</strong> {{ device.returnDueDate }}</p>  
+		  <button @click="confirmReturn(device)" class="return-btn">归还此设备</button>  
+		</div>  
+	  </div>  
+
+	  <p v-if="message" :class="messageClass">{{ message }}</p>  
+	</div>  
+</template>
   
-		<!-- 新增的选择框 -->
-		<div class="input-group">
-		  <select v-model="returnType" class="input-field">
-			<option value="apply">apply 领用后归还</option>
-			<option value="borrow">borrow 借用后归还</option>
-		  </select>
-		</div>
   
-		<button @click="returnDevice" class="submit-btn">归还</button>
-		<p v-if="message" :class="messageClass">{{ message }}</p>
-	  </div>
-	</div>
-  </template>
-  
-  
-  <script>
-export default {
-  data() {
-    return {
-      deviceId: '',
-      deviceName: '',
-      returnType: 'borrow', // 默认选中 "apply"
-      message: '',
-      messageClass: '' // 用于动态控制消息的样式
-    };
-  },
-  mounted() {
-    // 从 localStorage 获取用户名
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      const user = JSON.parse(storedUser);
-      this.username = user.username || ''; // 设置用户名
-    }
-  },
-  methods: {
-    // 返回主菜单
-    goToHome() {
-      this.$router.push('/user/dashboard'); // 假设你的主菜单页面路径是 '/home'
+<script>  
+export default {  
+  data() {  
+    return {  
+      appliedDevices: [], // 存储未归还的领用设备信息  
+      borrowedDevices: [], // 存储未归还的借用设备信息  
+      message: '',  
+      messageClass: '' // 用于动态控制消息的样式  
+    };  
+  },  
+  mounted() {  
+    const storedUser = localStorage.getItem('user');  
+    if (storedUser) {  
+      const user = JSON.parse(storedUser);  
+      this.username = user.username || ''; // 设置用户名  
+    }  
+    this.fetchUserDevices(); // 获取用户未归还设备  
+  },  
+  methods: {  
+    // 返回主菜单  
+    goToHome() {  
+      this.$router.push('/user/dashboard'); // 假设你的主菜单页面路径是 '/home'  
+    },  
+    async fetchUserDevices() {  
+      try {  
+        // Use query parameter format instead of URL path  
+        const response = await this.$axios.get(`http://localhost:8082/fixedasset_war_exploded/get-unreturned-devices?username=${encodeURIComponent(this.username)}`);  
+        if (response.data.success) {  
+          this.appliedDevices = response.data.deviceApplyArray || [];  
+          this.borrowedDevices = response.data.deviceBorrowArray || [];  
+        } else {  
+          this.message = response.data.message || '获取设备列表失败';  
+          this.messageClass = 'error';  
+        }  
+      } catch (error) {  
+        console.error('获取设备列表出错:', error);  
+        this.message = '获取设备列表失败，请重试';  
+        this.messageClass = 'error';  
+      }  
     },
-    returnDevice() {
-      if (!this.deviceId && !this.deviceName) {
-        this.message = '请输入设备ID或设备名称';
-        this.messageClass = 'error'; // 错误消息的样式
-        return;
-      }
+    confirmReturn(device) {  
+      // 确认归还设备的逻辑  
+      if (confirm(`是否确认归还设备：${device.devicename} (ID: ${device.deviceID})?`)) {  
+        this.returnDevice(device);  
+      }  
+    },  
+    returnDevice(device) {  
+      const data = {  
+        username: this.username,  
+        deviceId: device.deviceID, // 填充设备ID  
+        devicename: device.devicename,
+        returnType: this.appliedDevices.some(d => d.deviceID === device.deviceID) ? 'apply' : 'borrow'
+      };  
 
-      const data = {
-        username: this.username,
-        deviceId: this.deviceId || null,
-        deviceName: this.deviceName || null,
-        returnType: this.returnType // 传递归还类型
-      };
-
-      // 发送POST请求到后端归还设备接口
-      this.$axios.post('http://localhost:8082/fixedasset_war_exploded/return-device', data)
-        .then(response => {
-          this.message = response.data.message;
-          this.messageClass = response.data.success ? 'success' : 'error'; // 根据响应状态设置消息样式
-          if (response.data.success) {
-            this.deviceId = ''; // 清空输入框
-            this.deviceName = ''; // 清空输入框
-          }
-        })
-        .catch(error => {
-          console.error('设备归还出错:', error);
-          this.message = '设备归还失败，请检查输入信息';
-          this.messageClass = 'error'; // 错误消息的样式
-        });
-    }
-  }
-};
+      // 发送POST请求到后端归还设备接口  
+      this.$axios.post('http://localhost:8082/fixedasset_war_exploded/return-device', data)  
+        .then(response => {  
+          this.message = response.data.message;  
+          this.messageClass = response.data.success ? 'success' : 'error'; // 根据响应状态设置消息样式  
+          if (response.data.success) {  
+            // 从对应列表中移除已归还的设备  
+            this.appliedDevices = this.appliedDevices.filter(d => d.deviceID !== device.deviceID);  
+            this.borrowedDevices = this.borrowedDevices.filter(d => d.deviceID !== device.deviceID);  
+          }  
+        })  
+        .catch(error => {  
+          console.error('设备归还出错:', error);  
+          this.message = '设备归还失败，请检查输入信息';  
+          this.messageClass = 'error'; // 错误消息的样式  
+        });  
+    }  
+  }  
+};  
 </script>
+  
+<style scoped>  
+/* 高端大气的页面背景和布局 */  
+.page-container {  
+  display: flex;  
+  flex-direction: column;  
+  align-items: center;  
+  justify-content: flex-start;  
+  min-height: 100vh;  
+  background: linear-gradient(135deg, #1a1a2e, #162447);  
+  color: #e9e9e9;  
+  font-family: 'Poppins', sans-serif;  
+  padding: 20px;  
+}  
 
-  
-  <style scoped>
-  /* 页面背景和布局 */
-  .page-container {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	height: 100vh;
-	background: linear-gradient(135deg, #4e54c8, #8f94fb);
-	color: #fff;
-	font-family: 'Roboto', sans-serif;
-  }
-  
-  .header {
-	position: absolute;
-	top: 20px;
-	right: 20px;
-  }
-  
-  .back-btn {
-	background-color: #36b5f4;  /* 酷炫红色 */
-	color: white;
-	padding: 12px 30px;
-	border: none;
-	font-size: 18px;
-	cursor: pointer;
-	border-radius: 30px;
-	transition: all 0.3s ease;
-  }
-  
-  .back-btn:hover {
-	background-color: #e53935;
-	transform: scale(1.1); /* 放大效果 */
-  }
-  
-  /* 页面标题 */
-  .page-title {
-	font-size: 36px;
-	font-weight: bold;
-	margin-bottom: 30px;
-	text-align: center;
-	text-transform: uppercase;
-	letter-spacing: 1.5px;
-  }
-  
-  /* 表单容器 */
-  .form-container {
-	background-color: rgba(255, 255, 255, 1);
-	border-radius: 10px;
-	padding: 20px;
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-	width: 100%;
-	max-width: 400px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-  }
-  
-  /* 输入框组 */
-  .input-group {
-	width: 100%;
-	margin-bottom: 15px;
-  }
-  
-  /* 输入框 */
-  .input-field {
-	width: 100%;
-	padding: 15px;
-	margin: 10px 0;
-	border: 2px solid transparent;
-	border-radius: 10px;
-	font-size: 16px;
-	box-sizing: border-box;
-	transition: all 0.3s ease;
-	background: rgb(207, 205, 205);
-	color: #100505;
-  }
-  
-  .input-field:focus {
-	border-color: #4CAF50; /* 绿色边框 */
-	background: rgba(255, 255, 255, 0.3);
-	outline: none;
-	box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
-  }
-  
-  /* 提交按钮 */
-  .submit-btn {
-	background-color: #4CAF50;  /* 绿色背景 */
-	color: white;  /* 白色文字 */
-	border: none;
-	padding: 15px 30px;
-	font-size: 18px;
-	cursor: pointer;
-	border-radius: 10px;
-	margin-top: 10px;
-	transition: all 0.3s ease;
-  }
-  
-  .submit-btn:hover {
-	background-color: #45a049;  /* 按钮悬停时的背景色 */
-	box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
-	transform: translateY(-2px);
-  }
-  
-    /* 消息样式 */
-  /* 消息样式 */
-.success, .error {
-  font-size: 18px;
-  font-weight: 500;
-  padding: 10px 20px;
-  margin-top: 20px;
-  border-radius: 8px;
-  text-align: center;
-  width: 100%;
-  max-width: 400px;
-  box-sizing: border-box;
-  transition: all 0.3s ease;
-}
+/* 悬浮的返回按钮样式 */  
+.header {  
+  position: absolute;  
+  top: 20px;  
+  right: 20px;  
+}  
+.back-btn {  
+  background: #ff6f61; /* 酷炫红色 */  
+  color: white;  
+  padding: 12px 30px;  
+  border: none;  
+  border-radius: 30px;  
+  font-size: 18px;  
+  cursor: pointer;  
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);  
+  transition: all 0.3s ease;  
+}  
+.back-btn:hover {  
+  background: #e63946; /* 深红色 */  
+  transform: scale(1.1);  
+}  
 
-.success {
-  background-color: rgba(76, 175, 80, 0.1);  /* 淡绿色背景 */
-  color: #141d14;  /* 绿色文字 */
-  border: 1px solid #111311;  /* 绿色边框 */
-}
+/* 页面标题样式 */  
+.page-title {  
+  font-size: 36px;  
+  font-weight: 700;  
+  margin-bottom: 30px;  
+  text-align: center;  
+  text-transform: uppercase;  
+  letter-spacing: 2px;  
+}  
 
-.error {
-  background-color: rgba(244, 67, 54, 0.1);  /* 淡红色背景 */
-  color: #f44336;  /* 红色文字 */
-  border: 1px solid #f44336;  /* 红色边框 */
-}
+/* 设备部分样式 */  
+.devices-section {  
+  width: 100%;  
+  margin-bottom: 40px;  
+  background: rgba(255, 255, 255, 0.1);  
+  border-radius: 15px;  
+  padding: 20px;  
+  box-shadow: 0 4px 40px rgba(0, 0, 0, 0.2);  
+}  
+.devices-section h3 {  
+  font-size: 24px;  
+  font-weight: 600;  
+  margin-bottom: 15px;  
+}  
 
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .success, .error {
-    font-size: 16px;
-    padding: 8px 16px;
-  }
-}
-  /* 响应式设计 */
-  @media (max-width: 768px) {
-	.page-title {
-	  font-size: 28px;
-	}
+/* 设备卡片 */  
+.device-card {  
+  background: rgba(255, 255, 255, 0.2);  
+  border-radius: 10px;  
+  padding: 15px;  
+  margin: 15px 0;  
+  transition: transform 0.3s ease;  
+}  
+.device-card:hover {  
+  transform: translateY(-5px);  
+}  
+.return-btn {  
+  background: #00adb5;  /* 酷炫色调 */  
+  color: white;  
+  padding: 10px 20px;  
+  border: none;  
+  border-radius: 25px;  
+  cursor: pointer;  
+  transition: background 0.3s ease;  
+}  
+.return-btn:hover {  
+  background: #007a7f; /* 更暗的颜色 */  
+}  
+
+/* 消息样式 */  
+.success, .error {  
+  font-size: 18px;  
+  font-weight: 500;  
+  padding: 10px 20px;  
+  margin-top: 20px;  
+  border-radius: 8px;  
+  text-align: center;  
+  width: 100%;  
+  max-width: 400px;  
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);  
+}  
+
+.success {  
+  background-color: rgba(76, 175, 80, 0.1);  
+  color: #1b5e20;  
+}  
+
+.error {  
+  background-color: rgba(244, 67, 54, 0.1);  
+  color: #c62828;  
+}  
+
+/* 响应式设计 */  
+@media (max-width: 768px) {  
+  .page-title {  
+    font-size: 28px;  
+  }  
   
-	.form-container {
-	  width: 90%;
-	}
+  .devices-section {  
+    padding: 15px;  
+  }  
+
+  .device-card {  
+    padding: 10px;  
+  }  
   
-	.input-field {
-	  font-size: 14px;
-	}
-  
-	.submit-btn {
-	  font-size: 16px;
-	}
-  }
-  </style>
-  
+  .back-btn, .return-btn {  
+    width: 100%;  
+    padding: 10px 0;  
+  }  
+}  
+</style>  

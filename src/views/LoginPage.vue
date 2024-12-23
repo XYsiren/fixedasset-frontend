@@ -1,4 +1,5 @@
 <template>
+	<button @click="goToHome" class="back-btn">返回主菜单</button>
 	<div class="login-container">
 	  <div class="login-card">
 		<h1>登录</h1>
@@ -38,6 +39,10 @@
 	  };
 	},
 	methods: {
+		// 返回登录页面
+		goToHome() {
+		this.$router.push('/');
+	  },
 	  async handleLogin() {
 		console.log(`登录角色: ${this.role}`);
 		console.log(`用户名: ${this.usernameInput}`);
@@ -93,7 +98,7 @@
 	justify-content: center;
 	align-items: center;
 	height: 100vh;
-	background: linear-gradient(135deg, #6e7bff, #5e63d0);
+	background: linear-gradient(135deg, #6e7bff, #a4a7de);
   }
   
   .login-card {
