@@ -8,6 +8,7 @@ import UserViewDevice from '../views/User/UserViewDevice.vue'
 import UserApplyDevice from '../views/User/UserApplyDevice.vue'
 import UserBorrowDevice from '../views/User/UserBorrowDevice.vue'
 import UserReturnDevice from '../views/User/UserReturnDevice.vue'
+import ViewApplyDevice from '../views/User/ViewApplyDevice.vue'
 import AdminManageUser from '../views/Admin/AdminManageUser.vue'
 import AdminExamineApply from '../views/Admin/AdminExamineApply.vue'
 import AdminPutInStorageDevice from '../views/Admin/AdminDeviceManagement/AdminPutInStorageDevice.vue'
@@ -24,6 +25,10 @@ const routes = [
   {
     path: '/user/dashboard',
     component: UserDashboard
+  },
+  {
+    path: '/user/view-apply-devices',
+    component: ViewApplyDevice
   },
   {
     path: '/admin/dashboard',

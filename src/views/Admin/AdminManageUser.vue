@@ -47,41 +47,65 @@
 			<div class="user-email"><strong>邮箱:</strong> {{ user.email }}</div>
 			<div class="user-phone"><strong>电话:</strong> {{ user.phone }}</div>
 			<div v-if="user.isdeleted === '1'" class="user-deleted">  
-  				<strong >状态:</strong>   
-  				<strong class="isdeleted">已被删除</strong>
- 				 <br />  
-  				<strong>删除者:</strong> {{ user.deletedby }}  
+				<strong >状态:</strong>   
+				<strong class="isdeleted">已被删除</strong>
+				<br />  
+				<strong>删除者:</strong> {{ user.deletedby }}  
+			</div>
+			<div v-if="user.disabled === '1'" class="user-deleted">  
+				<strong >状态:</strong>   
+				<strong class="isdeleted">已被禁用</strong>
+				<br />  
+				<strong>删除者:</strong> {{ user.disabledby }}  
+			</div>
+			<button v-if="user.disabled === ''" @click="confirmDisable(user.userID)" class="disable-btn">禁用</button>
+			<button v-if="user.disabled === '1'" @click="confirmEnable(user.userID)" class="enable-btn">启用</button>
+			<button v-if="user.isdeleted!== '1'" @click="confirmDelete(user.userID)" class="delete-btn">删除</button>
 		</div>
-			<button v-if="user.isdeleted !== '1'" @click="confirmDelete(user.userID)" class="delete-btn">删除</button>
-		  </div>
 		</div>
 	  </div>
   
 	  <!-- 删除确认弹窗 -->
-	  <div v-if="showDeleteConfirm" class="delete-confirm">
-		<p>确定要删除此用户吗？</p>
-		<button @click="deleteUser">确认</button>
-		<button @click="showDeleteConfirm = false">取消</button>
-	  </div>
+		<div v-if="showDeleteConfirm" class="delete-confirm">
+			<p>确定要删除此用户吗？</p>
+			<button @click="deleteUser">确认</button>
+			<button @click="showDeleteConfirm = false">取消</button>
+		</div>
+	  <!-- 禁用确认弹窗 -->
+		<div v-if="showDisableConfirm" class="disable-confirm">
+			<p>确定要禁用此用户吗？</p>
+			<button @click="disableUser">确认</button>
+			<button @click="showDisableConfirm = false">取消</button>
+		</div>
+		<!-- 启用确认弹窗 -->
+		<div v-if="showEnableConfirm" class="enable-confirm">
+			<p>确定要启用此用户吗？</p>
+			<button @click="enableUser">确认</button>
+			<button @click="showEnableConfirm = false">取消</button>
+		</div>
 	</div>
   </template>
   
   <script>
   export default {
 	data() {
-	  return {
-		userList: [],  // 用户列表
-		role: "普通用户",
-		showAddUserForm: false,  // 控制添加用户表单的显示与隐藏
-		newUser: {  // 新用户数据
-		  username: "",
-		  password: "", // 确保包含密码字段  
-		  email: "",
-		  phone: ""
-		},
-		showDeleteConfirm: false,  // 控制删除确认弹窗的显示与隐藏
-		userToDelete: null  // 要删除的用户ID
-	  }
+		return {
+			userList: [],  // 用户列表
+			role: "普通用户",
+			showAddUserForm: false,  // 控制添加用户表单的显示与隐藏
+			newUser: {  // 新用户数据
+				username: "",
+				password: "", 
+				email: "",
+				phone: ""
+			},
+			showDeleteConfirm: false,  // 控制删除确认弹窗的显示与隐藏
+			userToDelete: null,  // 要删除的用户ID
+			showDisableConfirm: false,  // 控制禁用确认弹窗的显示与隐藏
+			userToDisable: null,  // 要禁用的用户ID
+			showEnableConfirm: false,  // 控制启用确认弹窗的显示与隐藏
+			userToEnable: null,  // 要启用的用户ID
+		}
 	},
 	mounted() {
 	  // 页面加载时获取用户列表
@@ -155,7 +179,65 @@
 		.catch(error => {  
 		console.error('添加用户出错:', error);  
 		});  
-	  }
+	  },
+	  // 确认禁用用户
+		confirmDisable(userID) {
+			this.userToDisable = userID;
+			this.showDisableConfirm = true;
+		},
+		// 禁用用户
+		disableUser() {
+			const data = {
+				action: 'disable',
+				userID: this.userToDisable,
+				username: this.username  // 将用户名放到请求数据中（假设这里需要，根据实际情况调整）
+			};
+			this.$axios.post(`http://localhost:8082/fixedasset_war_exploded/manage-disabled`, data)
+		.then(response => {
+				// 更新用户列表中对应用户的禁用状态（假设后端返回更新后的用户数据，根据实际接口返回调整）
+				this.userList = this.userList.map(user => {
+					if (user.userID === this.userToDisable) {
+						user.isdisabled = '1';
+					}
+					return user;
+				});
+				this.getUsers();
+				this.showDisableConfirm = false;
+				this.userToDisable = null;
+			})
+		.catch(error => {
+				console.error('禁用用户出错:', error);
+			});
+		},
+		// 确认启用用户
+		confirmEnable(userID) {
+			this.userToEnable = userID;
+			this.showEnableConfirm = true;
+		},
+		// 启用用户
+		enableUser() {
+			const data = {
+				action: 'enable',
+				userID: this.userToEnable,
+				username: this.username  // 将用户名放到请求数据中（假设这里需要，根据实际情况调整）
+			};
+			this.$axios.post(`http://localhost:8082/fixedasset_war_exploded/manage-disabled`, data)
+		.then(response => {
+				// 更新用户列表中对应用户的启用状态（假设后端返回更新后的用户数据，根据实际接口返回调整）
+				this.userList = this.userList.map(user => {
+					if (user.userID === this.userToEnable) {
+						user.isdisabled = '0';
+					}
+					return user;
+				});
+				this.getUsers();
+				this.showEnableConfirm = false;
+				this.userToEnable = null;
+			})
+		.catch(error => {
+				console.error('启用用户出错:', error);
+			});
+		}
 	}
   }
   </script>
@@ -297,6 +379,41 @@
   .user-name, .user-email, .user-phone,.user-isdeleted {
 	margin-bottom: 10px;
   }
+
+  .disable-btn {
+    background-color: rgb(209, 209, 209);
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+.enable-btn {
+    background-color: rgb(102, 209, 102);
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 5px 10px;
+}
+.disable-confirm {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgb(185, 185, 185);
+    border: 1px solid #ccc;
+    padding: 20px;
+    text-align: center;
+}
+.enable-confirm {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgb(102, 185, 102);
+    border: 1px solid #ccc;
+    padding: 20px;
+    text-align: center;
+}
   
   /* 提升视觉效果 */
   .user-name, .user-email, .user-phone {

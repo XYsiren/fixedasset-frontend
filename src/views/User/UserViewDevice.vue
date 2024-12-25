@@ -4,21 +4,26 @@
 
 		<h2 class="page-title">设备列表</h2>  
 		<div class="device-list">  
-			<div v-for="device in deviceList" :key="device.deviceID" class="device-card">  
-				<img :src="getImageUrl(device.imageUrl)" alt="设备图片" class="device-image" />  
-				<div class="device-info">  
-					<p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
-					<p><strong>设备名称:</strong> {{ device.devicename }}</p>  
-					<p><strong>设备类型:</strong> {{ device.type }}</p>  
-					<p><strong>设备状态:</strong>  
-						<span :class="['device-status', getStatusClass(device)]">  
-							{{ getDeviceStatus(device) }}  
-						</span>  
-					</p>  
-          <p><strong>在库数量:</strong> {{ device.number }}</p>
-				</div>  
-			</div>  
+      <div v-for="device in paginatedDevices" :key="device.deviceID" class="device-card">  
+      <img :src="getImageUrl(device.imageUrl)" alt="设备图片" class="device-image" />  
+      <div class="device-info">  
+        <p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
+        <p><strong>设备名称:</strong> {{ device.devicename }}</p>  
+        <p><strong>设备类型:</strong> {{ device.type }}</p>  
+        <p><strong>设备状态:</strong>  
+          <span :class="['device-status', getStatusClass(device)]">  
+            {{ getDeviceStatus(device) }}  
+          </span>  
+        </p>  
+        <p><strong>在库数量:</strong> {{ device.number }}</p>  
+      </div>  
+    </div> 
 		</div>  
+    <div class="pagination-controls">  
+      <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">上一页</button>  
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>  
+      <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">下一页</button>  
+    </div>
 	</div>  
 </template>
 
@@ -26,13 +31,24 @@
 <script>  
 export default {  
 	data() {  
-	  return {  
-		deviceList: []  
-	  }  
-	},  
+    return {  
+      deviceList: [],  
+      currentPage: 1,  
+      itemsPerPage: 8, // Change this to the desired number of items per page  
+    }  
+  }, 
 	mounted() {  
 	  this.getDeviceList();  
 	},  
+  computed: {  
+      paginatedDevices() {  
+        const start = (this.currentPage - 1) * this.itemsPerPage;  
+        return this.deviceList.slice(start, start + this.itemsPerPage);  
+      },  
+      totalPages() {  
+        return Math.ceil(this.deviceList.length / this.itemsPerPage);  
+      }  
+    },
 	methods: {  
 	  getDeviceList() {  
 		this.$axios.get('http://localhost:8082/fixedasset_war_exploded/view-device')  
@@ -74,6 +90,10 @@ export default {
     // 返回首页
     goToHome() {  
         this.$router.push('/user/dashboard');  
+    }  ,
+    changePage(pageNumber) {  
+      if (pageNumber < 1 || pageNumber > this.totalPages) return;   
+      this.currentPage = pageNumber;  
     }  
 	}  
 }
@@ -194,6 +214,26 @@ export default {
   color: #fff;
 }
 
+.pagination-controls {  
+  display: flex;  
+  justify-content: center;  
+  margin-top: 20px;  
+}  
+
+.pagination-controls button {  
+  background-color: #4CAF50;  
+  color: white;  
+  border: none;  
+  padding: 10px 15px;  
+  margin: 0 5px;  
+  border-radius: 5px;  
+  cursor: pointer;  
+}  
+
+.pagination-controls button:disabled {  
+  background-color: #ccc;  
+  cursor: not-allowed;  
+}
 /* 响应式设计 */
 @media (max-width: 768px) {
   .page-title {

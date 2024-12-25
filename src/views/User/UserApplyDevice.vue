@@ -1,66 +1,99 @@
 <template>  
-	<div class="page-container">  
-	  <button @click="goToHome" class="back-btn">返回主菜单</button>  
-  
-	  <h2 class="page-title">设备列表</h2>  
-  
-	  <div class="device-list">  
-		<div v-for="device in deviceList" :key="device.deviceID" class="device-card">  
-		  <div class="device-info">  
-			<p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
-			<p><strong>设备名称:</strong> {{ device.devicename }}</p>  
-			<p><strong>设备类型:</strong> {{ device.type }}</p>  
-			<p><strong>设备状态:</strong>  
-			  <span :class="['device-status', getStatusClass(device.status)]">  
-				{{ device.status }}  
-			  </span>  
-			</p>  
-		  </div>  
-		  <button v-if="device.status === '在库'" @click="openApplyModal(device)" class="apply-btn">领用设备</button>  
-		  <button v-if="device.status === '待审核'" class="apply-btn">设备审核中</button>    
-		</div>  
-	  </div>  
-  
-	  <div v-if="isModalOpen" class="modal">  
-        <div class="modal-content">  
-          <span class="close" @click="closeModal">&times;</span>  
-          <h3>领用设备</h3>  
-          <div class="input-group">  
-            <label for="deviceId">设备ID:</label>  
-            <input type="text" v-model="deviceId" id="deviceId" placeholder="请输入设备ID" class="input" />  
-            <label for="deviceName">设备名称:</label>  
-            <input type="text" v-model="deviceName" id="deviceName" placeholder="请输入设备名称" class="input" />  
-            <label for="applyPeriod">领用时间（天数）:</label>  
-            <input type="number" v-model="applyPeriod" id="applyPeriod" placeholder="请输入领用天数" class="input" min="1" @input="calculateReturnDate" />  
-            <label for="returnDate">应归还时间:</label>  
-            <input type="text" v-model="returnDueDate" id="returnDate" placeholder="应归还时间" class="input" readonly />  
-          </div>  
-          <p v-if="message" :class="['message', messageClass]">{{ message }}</p>  
-          <div class="modal-footer">  
-            <button @click="applyDevice" class="apply-btn">领用</button>  
-            <button @click="closeModal" class="cancel-btn">取消</button>  
-          </div>  
+  <div class="page-container">  
+    <button @click="goToHome" class="back-btn">返回主菜单</button>  
+
+    <h2 class="page-title">设备列表</h2>  
+
+    <!-- Moved the "查看领用设备" button to be just below the title -->  
+    <button @click="viewBorrowedDevices" class="view-borrowed-btn">查看领用设备</button>   
+
+    <div class="device-list">  
+      <div v-for="device in deviceList" :key="device.deviceID" class="device-card">  
+        <div class="device-info">  
+          <p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
+          <p><strong>设备名称:</strong> {{ device.devicename }}</p>  
+          <p><strong>设备类型:</strong> {{ device.type }}</p>  
+          <p><strong>设备状态:</strong>  
+            <span :class="['device-status', getStatusClass(device.status)]">  
+              {{ device.status }}  
+            </span>  
+          </p>  
         </div>  
-	  </div>  
-	</div>  
-</template>  
+        <p><strong>在库数量:</strong> {{ device.number }}</p>  
+        <div v-if="device.number > 0">  
+          <button @click="openApplyModal(device)" class="apply-btn">领用设备</button>  
+        </div>  
+        <button v-if="device.status === '待审核'" class="apply-btn">设备审核中</button>  
+      </div>  
+    </div>  
+
+    <!-- Modal for viewing borrowed devices -->  
+    <div v-if="isBorrowedModalOpen" class="modal">  
+      <div class="modal-content">  
+        <span class="close" @click="closeBorrowedModal">&times;</span>  
+        <h3>已领用设备</h3>  
+        <div v-if="borrowedDevices && borrowedDevices.length > 0"> <!-- 添加条件检查 -->  
+          <ul>  
+            <li v-for="device in borrowedDevices" :key="device.deviceID">  
+              <p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
+              <p><strong>设备名称:</strong> {{ device.devicename }}</p>  
+              <p><strong>领用状态:</strong> {{ device.status }}</p>  
+              <p><strong>领用时间（天数）:</strong> {{ device.applyPeriod }}</p>  
+              <p><strong>应归还时间:</strong> {{ device.returnDueDate }}</p>  
+            </li>  
+          </ul>  
+        </div>  
+        <div v-else>  
+          <p>您尚未领用任何设备。</p>  
+        </div>  
+      </div>  
+    </div>
+
+    <div v-if="isModalOpen" class="modal">  
+      <div class="modal-content">  
+        <span class="close" @click="closeModal">&times;</span>  
+        <h3>领用设备</h3>  
+        <div class="input-group">  
+          <label for="deviceId">设备ID:</label>  
+          <input type="text" v-model="deviceId" id="deviceId" placeholder="请输入设备ID" class="input" readonly />  
+          <label for="deviceName">设备名称:</label>  
+          <input type="text" v-model="deviceName" id="deviceName" placeholder="请输入设备名称" class="input" readonly />  
+          <label for="applyPeriod">领用时间（天数）:</label>  
+          <input type="number" v-model="applyPeriod" id="applyPeriod" placeholder="请输入领用天数" class="input" min="1" @input="calculateReturnDate" />  
+          <label for="returnDate">应归还时间:</label>  
+          <input type="text" v-model="returnDueDate" id="returnDate" placeholder="应归还时间" class="input" readonly />  
+          <label for="borrowQuantity">领用数量:</label>  
+          <input type="number" v-model="borrowQuantity" id="borrowQuantity" min="1" :max="selectedDevice?.number" placeholder="请输入领用数量" class="input" />  
+        </div>  
+        <p v-if="message" :class="['message', messageClass]">{{ message }}</p>  
+        <div class="modal-footer">  
+          <button @click="submitApplication" class="apply-btn">提交申请</button>  
+          <button class="cancel-btn" @click="closeModal">取消</button>  
+        </div>  
+      </div>  
+    </div>  
+  </div>  
+</template>
   
 <script>  
 export default {  
 	data() {  
-	  return {  
-		deviceList: [],  
-		deviceId: '',  
-		deviceName: '',   
-		applyPeriod: '',  
-		returnDueDate: '', // 新增的应归还时间属性  
-		message: '',  
-		messageClass: '',  
-		isModalOpen: false,  
-		selectedDevice: null,  
-		username: ''  
-	  };  
-	},  
+    return {  
+      deviceList: [],  
+      deviceId: '',  
+      deviceName: '',  
+      applyPeriod: '',  
+      returnDueDate: '',  
+      message: '',  
+      messageClass: '',  
+      isModalOpen: false,  
+      isBorrowedModalOpen: false, // Add a new boolean for the borrowed devices modal  
+      selectedDevice: null,  
+      username: '',  
+      borrowQuantity: 1, // Initializes borrow quantity to a default value  
+      borrowedDevices: [] // Array to hold the user's borrowed devices  
+    };  
+  },
 	mounted() {  
 	  this.getDeviceList();  
 	  const storedUser = localStorage.getItem('user');  
@@ -73,12 +106,14 @@ export default {
 	  getDeviceList() {  
       this.$axios.get('http://localhost:8082/fixedasset_war_exploded/view-device')  
         .then(response => {  
-        this.deviceList = response.data.deviceList;  
+          console.log(response.data); // 添加此行以调试  
+          this.deviceList = response.data.deviceList || []; // 确保有默认值  
+          console.log('获取到的借用设备数据类型:', typeof this.deviceList);
         })  
         .catch(error => {  
-        console.error('获取设备列表出错:', error);  
+          console.error('获取设备列表出错:', error);  
         });  
-	  },  
+    },  
 	  getStatusClass(status) {  
 		  return status === '在库' ? 'status-online' : (status === '已报废' ? 'status-offline' : 'status-pending');  
 	  },  
@@ -90,9 +125,10 @@ export default {
       this.selectedDevice = device;  
       this.deviceId = device.deviceID;  
       this.deviceName = device.devicename;  
-      this.applyPeriod = ''; // 清空之前的输入  
-      this.returnDueDate = ''; // 清空归还时间  
-	  },  
+      this.applyPeriod = ''; // Clear previous input  
+      this.returnDueDate = ''; // Clear return date  
+      this.borrowQuantity = 1; // Set default borrow quantity to 1  
+    },
 	  closeModal() {  
       this.isModalOpen = false;  
       this.deviceId = '';  
@@ -113,55 +149,76 @@ export default {
 	  },  
     applyDevice() {  
       if (!this.deviceId && !this.deviceName) {  
-          this.message = '请输入设备ID或设备名称';  
-          this.messageClass = 'error';  
-          return;  
+        this.message = '请输入设备ID或设备名称';  
+        this.messageClass = 'error';  
+        return;  
       }  
 
       if (!this.applyPeriod || this.applyPeriod <= 0) {  
-          this.message = '请输入有效的领用时间';  
-          this.messageClass = 'error';  
-          return;  
+        this.message = '请输入有效的领用时间';  
+        this.messageClass = 'error';  
+        return;  
+      }  
+
+      // Check if the borrow quantity is valid and does not exceed the available stock  
+      if (!this.borrowQuantity || this.borrowQuantity <= 0 || this.borrowQuantity > this.selectedDevice.number) {  
+        this.message = '领用数量必须大于0且不能超过在库数量';  
+        this.messageClass = 'error';  
+        return;  
       }  
 
       const data = {  
-          username: this.username,  
-          deviceId: this.deviceId || null,  
-          deviceName: this.deviceName || null,  
-          applyPeriod: this.applyPeriod,  
-          returnDueDate: this.returnDueDate  
+        username: this.username,  
+        deviceId: this.deviceId || null,  
+        deviceName: this.deviceName || null,  
+        applyPeriod: this.applyPeriod,  
+        returnDueDate: this.returnDueDate,  
+        quantity: this.borrowQuantity // Include the borrow quantity  
       };  
 
       this.$axios.post('http://localhost:8082/fixedasset_war_exploded/apply-device', data)  
-          .then(response => {  
-              if (response.data.success) {  
-                  this.message = '待管理员审核中！';  
-                  this.messageClass = 'success';  
+        .then(response => {  
+          if (response.data.success) {  
+            this.message = '待管理员审核中！';  
+            this.messageClass = 'success';  
 
-                  // 更新设备列表中的设备状态为“待审核”  
-                  const device = this.deviceList.find(d => d.deviceID === this.deviceId || d.devicename === this.deviceName);  
-                  if (device) {  
-                      device.status = '待审核'; // 直接更新设备状态  
-                  }  
+            // this.borrowedDevices = response.data.borrowedDevices || []; // 确保有默认值  
+            // this.isBorrowedModalOpen = false;  
 
-                  // 清空输入  
-                  this.deviceId = '';  
-                  this.deviceName = '';  
-                  this.applyPeriod = '';  
-                  this.returnDueDate = '';  
-                  this.closeModal();  
-              } else {  
-                  this.message = response.data.message || '设备领用失败，请检查输入信息';  
-                  this.messageClass = 'error';  
-              }  
-          })  
-          .catch(error => {  
-              console.error('设备领用出错:', error);  
-              this.message = '设备领用失败，请检查输入信息';  
-              this.messageClass = 'error';  
-          });  
-      } 
-    }  
+            // Update device status to "待审核" and reduce the available quantity  
+            // const device = this.deviceList.find(d => d.deviceID === this.deviceId || d.devicename === this.deviceName);  
+            // if (device) {  
+            //   device.status = '待审核';  
+            //   device.number -= this.borrowQuantity; // Decrease the available quantity  
+            // }  
+
+            // Clear inputs  
+            this.deviceId = '';  
+            this.deviceName = '';  
+            this.applyPeriod = '';  
+            this.returnDueDate = '';  
+            this.borrowQuantity = 1; // Reset borrow quantity  
+            this.closeModal();  
+          } else {  
+            this.message = response.data.message || '设备领用失败，请检查输入信息';  
+            this.messageClass = 'error';  
+          }  
+        })  
+        .catch(error => {  
+          console.error('设备领用出错:', error);  
+          this.message = '设备领用失败，请检查输入信息';  
+          this.messageClass = 'error';  
+        });  
+    },
+    viewBorrowedDevices() {
+      this.$router.push('/user/view-apply-devices');  
+  },
+  // closeBorrowedModal() {  
+  //   this.isBorrowedModalOpen = false;  
+  //   this.borrowedDevices = [];  
+  // },  
+
+ }  
 };  
 </script>
 
@@ -293,6 +350,21 @@ export default {
 	color: #fff;  
   }  
   
+  .view-borrowed-btn {  
+  background-color: #007bff; /* 蓝色 */  
+  color: white;  
+  padding: 10px 20px;  
+  border: none;  
+  border-radius: 5px;  
+  cursor: pointer;  
+  margin-bottom: 20px;  
+  transition: 0.3s;  
+}  
+
+.view-borrowed-btn:hover {  
+  background-color: #0056b3; /* Hover effect */  
+}
+
   /* 返回按钮 */  
   .back-btn {  
 	background-color: #ff4757; /* 红色 */  

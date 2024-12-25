@@ -24,7 +24,8 @@
 		<div v-if="borrowedDevices.length === 0" class="no-devices">没有未归还的借用设备。</div>  
 		<div v-for="device in borrowedDevices" :key="device.deviceID" class="device-card">  
 		  <p><strong>设备ID:</strong> {{ device.deviceID }}</p>  
-		  <p><strong>设备名称:</strong> {{ device.devicename }}</p>  
+		  <p><strong>设备名称:</strong> {{ device.devicename }}</p>
+      <p><strong>借用数量:</strong> {{ device.borrowNumber }}</p>   
       <p><strong>借用天数:</strong> {{ device.borrowPeriod }} 天</p>  
       <p><strong>应归还时间:</strong> {{ device.returnDueDate }}</p>  
 		  <button @click="confirmReturn(device)" class="return-btn">归还此设备</button>  
@@ -87,6 +88,7 @@ export default {
         username: this.username,  
         deviceId: device.deviceID, // 填充设备ID  
         devicename: device.devicename,
+        number: device.borrowNumber,
         returnType: this.appliedDevices.some(d => d.deviceID === device.deviceID) ? 'apply' : 'borrow'
       };  
 

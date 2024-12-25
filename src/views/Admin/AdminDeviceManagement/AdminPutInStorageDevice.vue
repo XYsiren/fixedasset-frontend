@@ -115,14 +115,14 @@
   <style scoped>  
   .page{
 	font-family: 'Roboto', sans-serif;
-	background: linear-gradient(145deg, #6e7dff, #5664d2);
+	background: linear-gradient(145deg, #949df3, #5261d6);
 	color: #fff;
 	padding: 20px;
 	min-height: 100vh;
   }
   .device-entry-container {  
 	font-family: 'Arial', sans-serif;  
-	background: linear-gradient(135deg, #78dff3, #4261af); /* 渐变背景 */  
+	background: linear-gradient(135deg, #9cddea, #bcbec2); /* 渐变背景 */  
 	border-radius: 20px;  
 	padding: 40px;  
 	box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);  
